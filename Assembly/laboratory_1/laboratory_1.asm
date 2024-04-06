@@ -1,44 +1,82 @@
 ; Объявление переменных A, B, C и X
 section .data
-    A dd 3
-    B dd 2
-    C dd 5
-    X dd 0
+    prompt_a: db "Enter value for A: ", 0xa
+    prompt_b: db "Enter value for B: ", 0xa
+    prompt_c: db "Enter value for C: ", 0xa
+    newline: db 0xa
 
-; Размещение памяти для переменной X
 section .bss
-    resd 1
+    a: resd 1
+    b: resd 1
+    c: resd 1
+    result: resd 1
 
-; Код программы
 section .text
     global _start
 _start:
-    ; Загрузка значений переменных A, B и C
-    mov eax, [A]
-    mov ebx, [B]
-    mov ecx, [C]
+    ; Вывод приглашения для ввода значения A
+    mov eax, 4
+    mov ebx, 1
+    mov ecx, prompt_a
+    mov edx, 12
+    int 80h
 
-    ; Вычисление выражения 3*(A - 4*B)
+    ; Чтение значения A
+    mov eax, 3
+    mov ebx, 0
+    mov ecx, a
+    mov edx, 4
+    int 80h
+
+    ; Вывод приглашения для ввода значения B
+    mov eax, 4
+    mov ebx, 1
+    mov ecx, prompt_b
+    mov edx, 12
+    int 80h
+
+    ; Чтение значения B
+    mov eax, 3
+    mov ebx, 0
+    mov ecx, b
+    mov edx, 4
+    int 80h
+
+    ; Вывод приглашения для ввода значения C
+    mov eax, 4
+    mov ebx, 1
+    mov ecx, prompt_c
+    mov edx, 12
+    int 80h
+
+    ; Чтение значения C
+    mov eax, 3
+    mov ebx, 0
+    mov ecx, c
+    mov edx, 4
+    int 80h
+
+    ; Загрузка адреса переменной X в регистр
+    lea ecx, [result]
+
+    ; Вычисление результата
+    mov eax, [a]
+    mov ebx, [b]
+    mov ecx, [c]
     imul ebx, 4
     sub eax, ebx
     imul eax, 3
+    cdq
+    idiv ecx
+    mov [ecx], eax
 
-    ; Добавление результата к C/4
-    cdq                   ; Установка edx в 0 для корректного деления
-    idiv ecx              ; Деление C на 4
-    add eax, [X]          ; Прибавление результата к X
-
-    ; Сохранение результата в переменной X
-    mov [X], eax
-
-    ; Вывод результата в стандартный вывод (stdout)
-    mov eax, 4            ; Системный вызов write
-    mov ebx, 1            ; Файл stdout
-    mov ecx, X            ; Адрес значения для вывода
-    mov edx, 4            ; Количество байт для вывода
-    int 0x80
+    ; Вывод результата
+    mov eax, 4
+    mov ebx, 1
+    mov edx, 4
+    int 80h
 
     ; Завершение программы
-    mov eax, 1            ; Системный вызов exit
-    mov ebx, 0            ; Код возврата
-    syscall               ; Вызываем системный сервис для завершения программы
+    mov eax, 1
+    mov ebx, 0
+    int 80h
