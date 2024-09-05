@@ -1,0 +1,14 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "nasm build",
+            "type": "shell",
+            "command": "nasm -f elf64 -g -F dwarf laboratory_2.asm -o lab_result_2",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
+        }
+    ]
+}
