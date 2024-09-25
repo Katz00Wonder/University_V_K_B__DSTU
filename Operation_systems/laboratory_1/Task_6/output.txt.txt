@@ -1,0 +1,1 @@
+DIR %WINDIR% /S /A:R /O:N > output.txt & TYPE output.txt

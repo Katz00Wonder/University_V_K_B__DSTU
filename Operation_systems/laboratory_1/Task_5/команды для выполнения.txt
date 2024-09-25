@@ -1,0 +1,3 @@
+help dir > help.txt
+help copy >> help.txt
+help xcopy >> help.txt

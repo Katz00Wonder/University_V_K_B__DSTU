@@ -1,0 +1,2 @@
+COPY CON my.txt
+SORT my.txt > sort.txt
