@@ -1,0 +1,35 @@
+.model small
+.data
+array db 3, 5, 7 ; Пример массива из 3 байт (можно заменить на нужные значения)
+result db 8 dup(0) ; Массив для хранения результатов
+
+.code
+main:
+mov ax, @data
+mov ds, ax
+
+; Значение для исключающего ИЛИ
+mov bl, 101 ; 101 в десятичной системе
+
+; Обработка 8 трехразрядных слов
+mov cx, 8 ; Количество слов
+lea si, array ; Указатель на массив
+lea di, result ; Указатель на массив результатов
+
+next_word:
+mov al, [si] ; Загружаем текущее слово
+xor al, bl ; Выполняем исключающее ИЛИ с 101
+mov [di], al ; Сохраняем результат
+inc si ; Переходим к следующему слову
+inc di ; Переходим к следующему результату
+loop next_word ; Повторяем, пока cx не станет 0
+
+; Завершение программы
+mov ax, 4C00h
+int 21h
+end main
+
+
+
+
+; [SOURCE]: C:\ProjectinProgramming\University_V_K_B__DSTU\Assembly\laboratory_3\laboratory_3.asm

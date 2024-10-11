@@ -1,0 +1,51 @@
+org 100h
+begin:  jmp start
+db "***" ; для красоты - чтобы были видны наши данные
+NB db 10100111b, 11111100b, 10010010b ; старший бит, байт - первым
+db "***" ;
+xorop db 10100000b,0,0 ; маска операции xor
+
+start:call doxor
+;     call doxor ; проверочный вызов - при двойном xor результат не должен меняться
+ret ; выход в эмулятор
+
+doxor:
+mov bl,10100000b ; 101 - старшие биты
+mov bh,0
+lea di,xorop
+mov [di],bl
+mov [di+1],bh
+mov [di+2],bh
+mov cx,8 ; цикл 8 раз
+m0:
+lea si,NB  ; выполняем операцию xor
+mov al,[di]
+xor [si],al
+
+mov al,[di+1]
+xor [si+1],al
+
+mov al,[di+2]
+xor [si+2],al
+
+clc   ; сдвигаем маску xor 3 раза вправо
+rcr byte ptr [di],1
+rcr byte ptr [di+1],1
+rcr byte ptr [di+2],1
+
+clc
+rcr byte ptr [di],1
+rcr byte ptr [di+1],1
+rcr byte ptr [di+2],1
+
+clc
+rcr byte ptr [di],1
+rcr byte ptr [di+1],1
+rcr byte ptr [di+2],1
+
+loop m0
+ret
+
+
+
+; [SOURCE]: C:\ProjectinProgramming\University_V_K_B__DSTU\Assembly\laboratory_3\laboratory_3.asm
