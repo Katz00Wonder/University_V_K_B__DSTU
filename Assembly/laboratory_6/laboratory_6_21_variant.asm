@@ -70,6 +70,11 @@ done:
     ; Null-terminate the result string
     mov byte ptr [di], '$'
 
+    ; Print a newline
+    lea dx, newline
+    mov ah, 09h
+    int 21h
+
     ; Print the result string
     lea dx, result_buffer
     mov ah, 09h
