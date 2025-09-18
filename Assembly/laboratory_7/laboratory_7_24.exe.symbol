@@ -1,0 +1,35 @@
+< THE SYMBOL TABLE >  laboratory_7_24.exe  --  emu8086 assembler version: 4.08 
+===================================================================================================
+Name                     	Offset    	Size      	Type      	Segment   
+===================================================================================================
+STACK                    	00000     	-5        	SEGMENT   	(ITSELF)  
+DATA                     	00010     	-5        	SEGMENT   	(ITSELF)  
+MSG1                     	00000     	1         	VAR       	data      
+MSG2                     	00019     	1         	VAR       	data      
+MSG3                     	00035     	1         	VAR       	data      
+MSG4                     	0005C     	1         	VAR       	data      
+MSG5                     	00088     	1         	VAR       	data      
+OLD_INT5                 	0009C     	2         	VAR       	data      
+CURRENT_ATTR             	000A0     	1         	VAR       	data      
+ATTR_COUNTER             	000A1     	1         	VAR       	data      
+CODE                     	0001B     	-5        	SEGMENT   	(ITSELF)  
+MAIN                     	00000     	-1        	NEAR      	code      
+CLEAR_SCREEN             	0001D     	-1        	NEAR      	code      
+SAVE_OLD_INTERRUPT       	00023     	-1        	NEAR      	code      
+SET_NEW_INTERRUPT        	00038     	-1        	NEAR      	code      
+RESTORE_INTERRUPT        	0004F     	-1        	NEAR      	code      
+PRINT_TEXT               	00068     	-1        	NEAR      	code      
+PRINT_WITH_ATTRIBUTE     	0008F     	-1        	NEAR      	code      
+PRINT_CHAR               	00092     	-1        	LABEL     	code      
+PRINT_DONE               	000AC     	-1        	LABEL     	code      
+PRINT_NUMBER             	000AE     	-1        	NEAR      	code      
+CONVERT_LOOP             	000B6     	-1        	LABEL     	code      
+PRINT_DIGITS             	000C2     	-1        	LABEL     	code      
+NEW_INT5_HANDLER         	000D1     	-1        	FAR       	code      
+UPDATE_ATTR              	000EE     	-1        	LABEL     	code      
+DEBUG_MSG                	00112     	1         	VAR       	code      
+PRINT_ALL_MESSAGES       	0013B     	-1        	NEAR      	code      
+===================================================================================================
+[ 17.09.2025  --  14:52:18 ] 
+< END >
+ 

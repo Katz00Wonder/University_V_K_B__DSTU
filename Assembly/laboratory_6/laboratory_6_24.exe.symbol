@@ -1,0 +1,33 @@
+< THE SYMBOL TABLE >  laboratory_6_24.exe  --  emu8086 assembler version: 4.08 
+===================================================================================================
+Name                     	Offset    	Size      	Type      	Segment   
+===================================================================================================
+STACK                    	00000     	-5        	SEGMENT   	(ITSELF)  
+DATA                     	00010     	-5        	SEGMENT   	(ITSELF)  
+MSG_INPUT                	00000     	1         	VAR       	data      
+MSG_BINARY               	00017     	1         	VAR       	data      
+MSG_ERROR                	00022     	1         	VAR       	data      
+MSG_NEWLINE              	0003F     	1         	VAR       	data      
+BUFFER                   	00042     	1         	VAR       	data      
+LEN                      	00043     	1         	VAR       	data      
+NUMBER_STR               	00044     	1         	VAR       	data      
+NUMBER                   	0004A     	2         	VAR       	data      
+IS_VALID                 	0004C     	1         	VAR       	data      
+CODE                     	00015     	-5        	SEGMENT   	(ITSELF)  
+MAIN                     	00000     	-1        	NEAR      	code      
+SHOW_ERROR               	0002C     	-1        	LABEL     	code      
+EXIT_PROGRAM             	00033     	-1        	LABEL     	code      
+STRING_TO_NUMBER         	00038     	-1        	NEAR      	code      
+CONVERT_LOOP             	00059     	-1        	LABEL     	code      
+INVALID_NUMBER           	0007F     	-1        	LABEL     	code      
+CONVERSION_DONE          	00084     	-1        	LABEL     	code      
+PRINT_BINARY             	0008A     	-1        	NEAR      	code      
+SKIP_LEADING_ZEROS       	00095     	-1        	LABEL     	code      
+START_PRINT              	000A5     	-1        	LABEL     	code      
+PRINT_BITS               	000A5     	-1        	LABEL     	code      
+PRINT_ZERO               	000AF     	-1        	LABEL     	code      
+BINARY_DONE              	000B5     	-1        	LABEL     	code      
+===================================================================================================
+[ 17.09.2025  --  14:56:35 ] 
+< END >
+ 

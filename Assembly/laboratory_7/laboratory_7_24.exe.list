@@ -1,0 +1,367 @@
+EMU8086 GENERATED LISTING. MACHINE CODE <- SOURCE.
+ 
+laboratory_7_24.exe -- emu8086 assembler version: 4.08  
+ 
+[ 17.09.2025  --  14:52:18 ] 
+ 
+===================================================================================================
+[LINE]     LOC: MACHINE CODE                          SOURCE
+===================================================================================================
+ 
+[   1]        :                                       .model small
+[   2]        :                                       .stack 100h
+[   3]        :                                       
+[   4]        :                                       .data
+[   5]        :                                       ; Сообщения для вывода
+[   6]    0100: 48 65 6C 6C 6F 2C 20 74 68 69 73 20   msg1 db 'Hello, this is line 1!', 0Dh, 0Ah, '$'
+                69 73 20 6C 69 6E 65 20 31 21 0D 0A 
+                24                                  
+[   7]    0119: 50 72 69 6E 74 20 53 63 72 65 65 6E   msg2 db 'Print Screen demo program', 0Dh, 0Ah, '$'
+                20 64 65 6D 6F 20 70 72 6F 67 72 61 
+                6D 0D 0A 24                         
+[   8]    0135: 50 72 65 73 73 20 50 72 69 6E 74 20   msg3 db 'Press Print Screen to change colors!', 0Dh, 0Ah, '$'
+                53 63 72 65 65 6E 20 74 6F 20 63 68 
+                61 6E 67 65 20 63 6F 6C 6F 72 73 21 
+                0D 0A 24                            
+[   9]    015C: 45 61 63 68 20 70 72 65 73 73 20 63   msg4 db 'Each press cycles through attributes 1-15', 0Dh, 0Ah, '$'
+                79 63 6C 65 73 20 74 68 72 6F 75 67 
+                68 20 61 74 74 72 69 62 75 74 65 73 
+                20 31 2D 31 35 0D 0A 24             
+[  10]    0188: 43 75 72 72 65 6E 74 20 61 74 74 72   msg5 db 'Current attribute: $'
+                69 62 75 74 65 3A 20 24             
+[  11]        :                                       
+[  12]        :                                       ; Переменные
+[  13]    019C: 00 00 00 00                           old_int5 dd ?       ; Для хранения старого вектора прерывания
+[  14]    01A0: 0E                                    current_attr db 14  ; Текущий атрибут (желтый)
+[  15]    01A1: 01                                    attr_counter db 1   ; Счетчик для цикла атрибутов
+[  16]        :                                       
+[  17]        :                                       .code
+[  18]    01B0:                                       main proc
+[  19]    01B0: B8 10 00                              mov ax, @data
+[  20]    01B3: 8E D8                                 mov ds, ax
+[  21]        :                                       
+[  22]        :                                       ; Очистка экрана
+[  23]    01B5: E8 15 00                              call clear_screen
+[  24]        :                                       
+[  25]        :                                       ; Сохранение старого обработчика Int 5h
+[  26]    01B8: E8 18 00                              call save_old_interrupt
+[  27]        :                                       
+[  28]        :                                       ; Установка нового обработчика Int 5h
+[  29]    01BB: E8 2A 00                              call set_new_interrupt
+[  30]        :                                       
+[  31]        :                                       ; Вывод текста с начальным атрибутом
+[  32]    01BE: E8 57 00                              call print_text
+[  33]        :                                       
+[  34]        :                                       ; Бесконечный цикл ожидания
+[  35]    01C1: B4 00                                 mov ah, 0
+[  36]    01C3: CD 16                                 int 16h             ; Ожидание любой клавиши
+[  37]        :                                       
+[  38]        :                                       ; Восстановление старого обработчика перед выходом
+[  39]    01C5: E8 37 00                              call restore_interrupt
+[  40]        :                                       
+[  41]        :                                       ; Завершение программы
+[  42]    01C8: B8 00 4C                              mov ax, 4C00h
+[  43]    01CB: CD 21                                 int 21h
+[  44]        :                                       main endp
+[  45]        :                                       
+[  46]        :                                       ; Процедура очистки экрана
+[  47]    01CD:                                       clear_screen proc
+[  48]    01CD: B8 03 00                              mov ax, 0003h       ; Режим 80x25, 16 цветов
+[  49]    01D0: CD 10                                 int 10h
+[  50]    01D2: C3                                    ret
+[  51]        :                                       clear_screen endp
+[  52]        :                                       
+[  53]        :                                       ; Процедура сохранения старого обработчика Int 5h
+[  54]    01D3:                                       save_old_interrupt proc
+[  55]    01D3: 06                                    push es
+[  56]    01D4: 33 C0                                 xor ax, ax
+[  57]    01D6: 8E C0                                 mov es, ax          ; ES = 0 (сегмент векторов прерываний)
+[  58]        :                                       
+[  59]        :                                       ; Сохраняем старый вектор Int 5h
+[  60]    01D8: 26 A1 14 00                           mov ax, es:[5h * 4]
+[  61]    01DC: A3 9C 00                              mov word ptr old_int5, ax
+[  62]    01DF: 26 A1 16 00                           mov ax, es:[5h * 4 + 2]
+[  63]    01E3: A3 9E 00                              mov word ptr old_int5 + 2, ax
+[  64]        :                                       
+[  65]    01E6: 07                                    pop es
+[  66]    01E7: C3                                    ret
+[  67]        :                                       save_old_interrupt endp
+[  68]        :                                       
+[  69]        :                                       ; Процедура установки нового обработчика
+[  70]    01E8:                                       set_new_interrupt proc
+[  71]    01E8: 1E                                    push ds
+[  72]    01E9: 06                                    push es
+[  73]    01EA: 33 C0                                 xor ax, ax
+[  74]    01EC: 8E C0                                 mov es, ax          ; ES = 0
+[  75]        :                                       
+[  76]        :                                       ; Устанавливаем новый вектор Int 5h
+[  77]    01EE: FA                                    cli                 ; Запрещаем прерывания
+[  78]    01EF: 26 C7 06 14 00 D1 00                  mov word ptr es:[5h * 4], offset new_int5_handler
+[  79]    01F6: 26 8C 0E 16 00                        mov es:[5h * 4 + 2], cs
+[  80]    01FB: FB                                    sti                 ; Разрешаем прерывания
+[  81]        :                                       
+[  82]    01FC: 07                                    pop es
+[  83]    01FD: 1F                                    pop ds
+[  84]    01FE: C3                                    ret
+[  85]        :                                       set_new_interrupt endp
+[  86]        :                                       
+[  87]        :                                       ; Процедура восстановления старого обработчика
+[  88]    01FF:                                       restore_interrupt proc
+[  89]    01FF: 1E                                    push ds
+[  90]    0200: 06                                    push es
+[  91]    0201: 33 C0                                 xor ax, ax
+[  92]    0203: 8E C0                                 mov es, ax          ; ES = 0
+[  93]        :                                       
+[  94]        :                                       ; Восстанавливаем старый вектор Int 5h
+[  95]    0205: FA                                    cli
+[  96]    0206: A1 9C 00                              mov ax, word ptr old_int5
+[  97]    0209: 26 A3 14 00                           mov es:[5h * 4], ax
+[  98]    020D: A1 9E 00                              mov ax, word ptr old_int5 + 2
+[  99]    0210: 26 A3 16 00                           mov es:[5h * 4 + 2], ax
+[ 100]    0214: FB                                    sti
+[ 101]        :                                       
+[ 102]    0215: 07                                    pop es
+[ 103]    0216: 1F                                    pop ds
+[ 104]    0217: C3                                    ret
+[ 105]        :                                       restore_interrupt endp
+[ 106]        :                                       
+[ 107]        :                                       ; Процедура вывода текста с текущим атрибутом
+[ 108]    0218:                                       print_text proc
+[ 109]        :                                       ; Установка позиции курсора
+[ 110]    0218: B4 02                                 mov ah, 02h
+[ 111]    021A: B7 00                                 mov bh, 0           ; Страница 0
+[ 112]    021C: B6 05                                 mov dh, 5           ; Строка 5
+[ 113]    021E: B2 0A                                 mov dl, 10          ; Колонка 10
+[ 114]    0220: CD 10                                 int 10h
+[ 115]        :                                       
+[ 116]        :                                       ; Вывод сообщений с текущим атрибутом
+[ 117]    0222: 8A 1E A0 00                           mov bl, current_attr
+[ 118]    0226: E8 16 00                              call print_with_attribute
+[ 119]        :                                       
+[ 120]        :                                       ; Вывод информации о текущем атрибуте
+[ 121]    0229: B4 02                                 mov ah, 02h
+[ 122]    022B: B6 0F                                 mov dh, 15
+[ 123]    022D: B2 0A                                 mov dl, 10
+[ 124]    022F: CD 10                                 int 10h
+[ 125]        :                                       
+[ 126]    0231: B4 09                                 mov ah, 09h
+[ 127]    0233: BA 88 00                              lea dx, msg5
+[ 128]    0236: CD 21                                 int 21h
+[ 129]        :                                       
+[ 130]        :                                       ; Вывод номера атрибута
+[ 131]    0238: A0 A0 00                              mov al, current_attr
+[ 132]    023B: E8 20 00                              call print_number
+[ 133]        :                                       
+[ 134]    023E: C3                                    ret
+[ 135]        :                                       print_text endp
+[ 136]        :                                       
+[ 137]        :                                       ; Процедура вывода строки с атрибутом
+[ 138]        :                                       ; Вход: DX - адрес строки, BL - атрибут
+[ 139]    023F:                                       print_with_attribute proc
+[ 140]    023F: 56                                    push si
+[ 141]    0240: 8B F2                                 mov si, dx
+[ 142]        :                                       
+[ 143]    0242:                                       print_char:
+[ 144]    0242: AC                                    lodsb               ; Загружаем символ
+[ 145]    0243: 3C 24                                 cmp al, '$'         ; Конец строки?
+[ 146]    0245: 74 15                                 je print_done
+[ 147]        :                                       
+[ 148]        :                                       ; Вывод символа с атрибутом
+[ 149]    0247: B4 09                                 mov ah, 09h
+[ 150]    0249: B7 00                                 mov bh, 0           ; Страница 0
+[ 151]    024B: B9 01 00                              mov cx, 1           ; Количество повторений
+[ 152]    024E: CD 10                                 int 10h
+[ 153]        :                                       
+[ 154]        :                                       ; Перемещение курсора
+[ 155]    0250: B4 03                                 mov ah, 03h         ; Получить позицию курсора
+[ 156]    0252: CD 10                                 int 10h
+[ 157]    0254: FE C2                                 inc dl              ; Следующая колонка
+[ 158]    0256: B4 02                                 mov ah, 02h         ; Установить позицию курсора
+[ 159]    0258: CD 10                                 int 10h
+[ 160]        :                                       
+[ 161]    025A: EB E6                                 jmp print_char
+[ 162]        :                                       
+[ 163]    025C:                                       print_done:
+[ 164]    025C: 5E                                    pop si
+[ 165]    025D: C3                                    ret
+[ 166]        :                                       print_with_attribute endp
+[ 167]        :                                       
+[ 168]        :                                       ; Процедура вывода числа (0-255)
+[ 169]    025E:                                       print_number proc
+[ 170]    025E: 50                                    push ax
+[ 171]    025F: 53                                    push bx
+[ 172]    0260: 51                                    push cx
+[ 173]    0261: 52                                    push dx
+[ 174]        :                                       
+[ 175]    0262: B3 0A                                 mov bl, 10
+[ 176]    0264: 33 C9                                 xor cx, cx
+[ 177]        :                                       
+[ 178]    0266:                                       convert_loop:
+[ 179]    0266: 32 E4                                 xor ah, ah
+[ 180]    0268: F6 F3                                 div bl
+[ 181]    026A: 8A D4                                 mov dl, ah
+[ 182]    026C: 52                                    push dx
+[ 183]    026D: 41                                    inc cx
+[ 184]    026E: 84 C0                                 test al, al
+[ 185]    0270: 75 F4                                 jnz convert_loop
+[ 186]        :                                       
+[ 187]    0272:                                       print_digits:
+[ 188]    0272: 5A                                    pop dx
+[ 189]    0273: 80 C2 30                              add dl, '0'
+[ 190]    0276: B4 02                                 mov ah, 02h
+[ 191]    0278: CD 21                                 int 21h
+[ 192]    027A: E2 F6                                 loop print_digits
+[ 193]        :                                       
+[ 194]    027C: 5A                                    pop dx
+[ 195]    027D: 59                                    pop cx
+[ 196]    027E: 5B                                    pop bx
+[ 197]    027F: 58                                    pop ax
+[ 198]    0280: C3                                    ret
+[ 199]        :                                       print_number endp
+[ 200]        :                                       
+[ 201]        :                                       ; НОВЫЙ ОБРАБОТЧИК ПРЕРЫВАНИЯ Int 5h
+[ 202]    0281:                                       new_int5_handler proc far
+[ 203]    0281: 50                                    push ax
+[ 204]    0282: 53                                    push bx
+[ 205]    0283: 51                                    push cx
+[ 206]    0284: 52                                    push dx
+[ 207]    0285: 56                                    push si
+[ 208]    0286: 57                                    push di
+[ 209]    0287: 1E                                    push ds
+[ 210]    0288: 06                                    push es
+[ 211]        :                                       
+[ 212]    0289: B8 10 00                              mov ax, @data
+[ 213]    028C: 8E D8                                 mov ds, ax
+[ 214]        :                                       
+[ 215]        :                                       ; Циклическое изменение атрибута (1-15)
+[ 216]    028E: FE 06 A1 00                           inc attr_counter
+[ 217]    0292: 80 3E A1 00 10                        cmp attr_counter, 16
+[ 218]    0297: 72 05                                 jb update_attr
+[ 219]    0299: C6 06 A1 00 01                        mov attr_counter, 1
+[ 220]        :                                       
+[ 221]    029E:                                       update_attr:
+[ 222]    029E: A0 A1 00                              mov al, attr_counter
+[ 223]    02A1: A2 A0 00                              mov current_attr, al
+[ 224]        :                                       
+[ 225]        :                                       ; Очистка экрана
+[ 226]    02A4: E8 26 FF                              call clear_screen
+[ 227]        :                                       
+[ 228]        :                                       ; Вывод текста с новым атрибутом
+[ 229]    02A7: E8 6E FF                              call print_text
+[ 230]        :                                       
+[ 231]        :                                       ; Вывод отладочного сообщения (опционально)
+[ 232]    02AA: B4 02                                 mov ah, 02h
+[ 233]    02AC: B6 14                                 mov dh, 20
+[ 234]    02AE: B2 00                                 mov dl, 0
+[ 235]    02B0: CD 10                                 int 10h
+[ 236]        :                                       
+[ 237]    02B2: B4 09                                 mov ah, 09h
+[ 238]    02B4: BA 12 01                              lea dx, debug_msg
+[ 239]    02B7: CD 21                                 int 21h
+[ 240]        :                                       
+[ 241]    02B9: 07                                    pop es
+[ 242]    02BA: 1F                                    pop ds
+[ 243]    02BB: 5F                                    pop di
+[ 244]    02BC: 5E                                    pop si
+[ 245]    02BD: 5A                                    pop dx
+[ 246]    02BE: 59                                    pop cx
+[ 247]    02BF: 5B                                    pop bx
+[ 248]    02C0: 58                                    pop ax
+[ 249]        :                                       
+[ 250]    02C1: CF                                    iret                ; Возврат из прерывания
+[ 251]        :                                       
+[ 252]    02C2: 50 72 69 6E 74 20 53 63 72 65 65 6E   debug_msg db 'Print Screen pressed! Attribute changed.', '$'
+                20 70 72 65 73 73 65 64 21 20 41 74 
+                74 72 69 62 75 74 65 20 63 68 61 6E 
+                67 65 64 2E 24                      
+[ 253]        :                                       new_int5_handler endp
+[ 254]        :                                       
+[ 255]        :                                       ; Процедура вывода всех сообщений
+[ 256]    02EB:                                       print_all_messages proc
+[ 257]        :                                       ; Сообщение 1
+[ 258]    02EB: B4 02                                 mov ah, 02h
+[ 259]    02ED: B6 06                                 mov dh, 6
+[ 260]    02EF: B2 0A                                 mov dl, 10
+[ 261]    02F1: CD 10                                 int 10h
+[ 262]    02F3: BA 00 00                              mov dx, offset msg1
+[ 263]    02F6: 8A 1E A0 00                           mov bl, current_attr
+[ 264]    02FA: E8 42 FF                              call print_with_attribute
+[ 265]        :                                       
+[ 266]        :                                       ; Сообщение 2
+[ 267]    02FD: B4 02                                 mov ah, 02h
+[ 268]    02FF: B6 07                                 mov dh, 7
+[ 269]    0301: B2 0A                                 mov dl, 10
+[ 270]    0303: CD 10                                 int 10h
+[ 271]    0305: BA 19 00                              mov dx, offset msg2
+[ 272]    0308: E8 34 FF                              call print_with_attribute
+[ 273]        :                                       
+[ 274]        :                                       ; Сообщение 3
+[ 275]    030B: B4 02                                 mov ah, 02h
+[ 276]    030D: B6 08                                 mov dh, 8
+[ 277]    030F: B2 0A                                 mov dl, 10
+[ 278]    0311: CD 10                                 int 10h
+[ 279]    0313: BA 35 00                              mov dx, offset msg3
+[ 280]    0316: E8 26 FF                              call print_with_attribute
+[ 281]        :                                       
+[ 282]        :                                       ; Сообщение 4
+[ 283]    0319: B4 02                                 mov ah, 02h
+[ 284]    031B: B6 09                                 mov dh, 9
+[ 285]    031D: B2 0A                                 mov dl, 10
+[ 286]    031F: CD 10                                 int 10h
+[ 287]    0321: BA 5C 00                              mov dx, offset msg4
+[ 288]    0324: E8 18 FF                              call print_with_attribute
+[ 289]        :                                       
+[ 290]    0327: C3                                    ret
+[ 291]        :                                       print_all_messages endp
+[ 292]        :                                       
+[ 293]        :                                       end main
+[ 294]        :                                       
+ 
+===================================================================================================
+ 
+EXE HEADER - bytes from 0000 to 01FF inclusive.
+
+0000: 4D      -   exe signature (M)
+0001: 5A      -   exe signature (Z)
+0002: 28      -   bytes on last page (l.byte)
+0003: 01      -   bytes on last page (h.byte)
+0004: 03      -   512 byte pages in file (l.byte)
+0005: 00      -   512 byte pages in file (h.byte)
+0006: 02      -   relocations (l.byte)
+0007: 00      -   relocations (h.byte)
+0008: 20      -   paragraphs in header (l.byte)
+0009: 00      -   paragraphs in header (h.byte)
+000A: 00      -   minimum memory (l.byte)
+000B: 00      -   minimum memory (h.byte)
+000C: FF      -   maximum memory (l.byte)
+000D: FF      -   maximum memory (h.byte)
+000E: 00      -   SS - stack segment (l.byte)
+000F: 00      -   SS - stack segment (h.byte)
+0010: 00      -   SP - stack pointer (l.byte)
+0011: 01      -   SP - stack pointer (h.byte)
+0012: 08      -   check sum (l.byte)
+0013: 05      -   check sum (h.byte)
+0014: 00      -   IP - instruction pointer (l.byte)
+0015: 00      -   IP - instruction pointer (h.byte)
+0016: 1B      -   CS - code segment (l.byte)
+0017: 00      -   CS - code segment (h.byte)
+0018: 1E      -   relocation table adress (l.byte)
+0019: 00      -   relocation table adress (h.byte)
+001A: 00      -   overlay number (l.byte)
+001B: 00      -   overlay number (h.byte)
+001C: 01      -   signature (l.byte)
+001D: 00      -   signature (h.byte)
+001E: 01      -   relocation table - offset inside segment (l.byte)
+001F: 00      -   relocation table - offset inside segment (h.byte)
+0020: 1B      -   relocation table - segment anchor (l.byte)
+0021: 00      -   relocation table - segment anchor (h.byte)
+0022: DA      -   relocation table - offset inside segment (l.byte)
+0023: 00      -   relocation table - offset inside segment (h.byte)
+0024: 1B      -   relocation table - segment anchor (l.byte)
+0025: 00      -   relocation table - segment anchor (h.byte)
+0026 to 01FF  -   reserved relocation area  (00) 
+
+
+
+
+===================================================================================================

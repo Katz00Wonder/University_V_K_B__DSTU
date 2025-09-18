@@ -1,0 +1,176 @@
+.model small
+.stack 100h
+
+.data
+    ; Массив слов (16-битных значений)
+    numbers dw 5, -3, 8, 1, -7, 12, 0, 4, -2, 9
+    count equ ($ - numbers) / 2  ; Количество элементов в массиве
+    
+    ; Сообщения
+    msg_positive db 'Positive numbers found: $'
+    msg_min db 0Dh, 0Ah, 'Minimum positive number: $'
+    msg_none db 0Dh, 0Ah, 'No positive numbers found$'
+    msg_space db ' $'
+    
+    min_value dw ?        ; Для хранения минимального положительного числа
+    found_flag db 0       ; Флаг: найдены ли положительные числа
+
+.code
+main proc
+    mov ax, @data
+    mov ds, ax
+    
+    ; Инициализация
+    mov cx, count         ; Загружаем количество элементов
+    mov si, offset numbers ; Указатель на начало массива
+    mov found_flag, 0     ; Сбрасываем флаг
+    
+    ; Поиск первого положительного числа для инициализации min_value
+    mov bx, 0FFFFh        ; Начальное значение (максимальное возможное)
+    
+find_first_positive:
+    mov ax, [si]          ; Загружаем текущее число
+    test ax, ax           ; Проверяем знак
+    jle next_element      ; Если <= 0, пропускаем
+    
+    ; Нашли первое положительное число
+    mov bx, ax           ; Инициализируем минимум
+    mov min_value, ax
+    mov found_flag, 1    ; Устанавливаем флаг
+    jmp continue_search
+    
+next_element:
+    add si, 2            ; Переходим к следующему элементу
+    loop find_first_positive
+    
+    ; Если не найдено положительных чисел
+    cmp found_flag, 0
+    je no_positive
+    
+continue_search:
+    ; Продолжаем поиск минимального положительного числа
+    mov cx, count - 1    ; Оставшиеся элементы
+    add si, 2            ; Переходим к следующему элементу
+    
+search_loop:
+    mov ax, [si]         ; Загружаем текущее число
+    
+    ; Проверяем, положительное ли число
+    test ax, ax
+    jle skip_negative    ; Если <= 0, пропускаем
+    
+    ; Сравниваем с текущим минимумом
+    cmp ax, bx
+    jge skip_positive    ; Если больше или равно, пропускаем
+    
+    ; Нашли новый минимум
+    mov bx, ax
+    mov min_value, ax
+    
+skip_positive:
+    mov found_flag, 1    ; Устанавливаем флаг, что нашли положительное
+    
+skip_negative:
+    add si, 2            ; Переходим к следующему элементу
+    loop search_loop
+    
+    ; Проверяем, были ли найдены положительные числа
+    cmp found_flag, 0
+    je no_positive
+    
+    ; Вывод результатов
+    call display_results
+    jmp exit_program
+    
+no_positive:
+    ; Вывод сообщения об отсутствии положительных чисел
+    mov ah, 09h
+    lea dx, msg_none
+    int 21h
+    jmp exit_program
+    
+exit_program:
+    mov ax, 4C00h
+    int 21h
+main endp
+
+; Процедура для вывода результатов
+display_results proc
+    ; Вывод заголовка
+    mov ah, 09h
+    lea dx, msg_positive
+    int 21h
+    
+    ; Вывод всех положительных чисел
+    mov cx, count
+    mov si, offset numbers
+    
+print_loop:
+    mov ax, [si]
+    test ax, ax
+    jle skip_print
+    
+    ; Вывод положительного числа
+    call print_number
+    mov ah, 09h
+    lea dx, msg_space
+    int 21h
+    
+skip_print:
+    add si, 2
+    loop print_loop
+    
+    ; Вывод минимального положительного числа
+    mov ah, 09h
+    lea dx, msg_min
+    int 21h
+    
+    mov ax, min_value
+    call print_number
+    
+    ret
+display_results endp
+
+; Процедура для вывода числа (16-битное)
+print_number proc
+    push ax
+    push bx
+    push cx
+    push dx
+    
+    mov bx, 10          ; Основание системы счисления
+    xor cx, cx          ; Счетчик цифр
+    
+    ; Проверка знака
+    test ax, ax
+    jns convert_loop
+    neg ax              ; Если отрицательное, делаем положительным
+    push ax
+    mov dl, '-'
+    mov ah, 02h
+    int 21h
+    pop ax
+    
+convert_loop:
+    xor dx, dx
+    div bx              ; Делим AX на 10
+    push dx             ; Сохраняем остаток (цифру)
+    inc cx              ; Увеличиваем счетчик цифр
+    test ax, ax
+    jnz convert_loop
+    
+print_digits:
+    pop dx              ; Извлекаем цифру
+    add dl, '0'         ; Преобразуем в символ
+    mov ah, 02h         ; Вывод символа
+    int 21h
+    loop print_digits
+    
+    pop dx
+    pop cx
+    pop bx
+    pop ax
+    ret
+print_number endp
+
+end main

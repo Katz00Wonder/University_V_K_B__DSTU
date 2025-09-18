@@ -1,0 +1,235 @@
+EMU8086 GENERATED LISTING. MACHINE CODE <- SOURCE.
+ 
+laboratory_6_24.exe -- emu8086 assembler version: 4.08  
+ 
+[ 17.09.2025  --  14:56:35 ] 
+ 
+===================================================================================================
+[LINE]     LOC: MACHINE CODE                          SOURCE
+===================================================================================================
+ 
+[   1]        :                                       .model small
+[   2]        :                                       .stack 100h
+[   3]        :                                       
+[   4]        :                                       .data
+[   5]        :                                       ; Сообщения
+[   6]    0100: 45 6E 74 65 72 20 64 65 63 69 6D 61   msg_input db 'Enter decimal number: $'
+                6C 20 6E 75 6D 62 65 72 3A 20 24    
+[   7]    0117: 0D 0A 42 69 6E 61 72 79 3A 20 24      msg_binary db 0Dh, 0Ah, 'Binary: $'
+[   8]    0122: 0D 0A 45 72 72 6F 72 3A 20 4E 6F 74   msg_error db 0Dh, 0Ah, 'Error: Not a valid number!$'
+                20 61 20 76 61 6C 69 64 20 6E 75 6D 
+                62 65 72 21 24                      
+[   9]    013F: 0D 0A 24                              msg_newline db 0Dh, 0Ah, '$'
+[  10]        :                                       
+[  11]        :                                       ; Буфер для ввода
+[  12]    0142: 07                                    buffer db 7          ; Максимальная длина (5 цифр + Enter)
+[  13]    0143: 00                                    len db ?            ; Фактическая длина
+[  14]    0144: 24 24 24 24 24 24                     number_str db 6 dup('$') ; Строка с числом
+[  15]        :                                       
+[  16]        :                                       ; Переменные
+[  17]    014A: 00 00                                 number dw 0          ; Преобразованное число
+[  18]    014C: 01                                    is_valid db 1        ; Флаг валидности
+[  19]        :                                       
+[  20]        :                                       .code
+[  21]    0150:                                       main proc
+[  22]    0150: B8 10 00                              mov ax, @data
+[  23]    0153: 8E D8                                 mov ds, ax
+[  24]        :                                       
+[  25]        :                                       ; Вывод приглашения
+[  26]    0155: B4 09                                 mov ah, 09h
+[  27]    0157: BA 00 00                              lea dx, msg_input
+[  28]    015A: CD 21                                 int 21h
+[  29]        :                                       
+[  30]        :                                       ; Ввод строки
+[  31]    015C: B4 0A                                 mov ah, 0Ah
+[  32]    015E: BA 42 00                              lea dx, buffer
+[  33]    0161: CD 21                                 int 21h
+[  34]        :                                       
+[  35]        :                                       ; Преобразование строки в число
+[  36]    0163: E8 22 00                              call string_to_number
+[  37]        :                                       
+[  38]        :                                       ; Проверка валидности
+[  39]    0166: 80 3E 4C 00 00                        cmp is_valid, 0
+[  40]    016B: 74 0F                                 je show_error
+[  41]        :                                       
+[  42]        :                                       ; Вывод результата
+[  43]    016D: B4 09                                 mov ah, 09h
+[  44]    016F: BA 17 00                              lea dx, msg_binary
+[  45]    0172: CD 21                                 int 21h
+[  46]        :                                       
+[  47]        :                                       ; Преобразование числа в двоичную систему и вывод
+[  48]    0174: A1 4A 00                              mov ax, number
+[  49]    0177: E8 60 00                              call print_binary
+[  50]        :                                       
+[  51]    017A: EB 07                                 jmp exit_program
+[  52]        :                                       
+[  53]    017C:                                       show_error:
+[  54]    017C: B4 09                                 mov ah, 09h
+[  55]    017E: BA 22 00                              lea dx, msg_error
+[  56]    0181: CD 21                                 int 21h
+[  57]        :                                       
+[  58]    0183:                                       exit_program:
+[  59]        :                                       ; Завершение программы
+[  60]    0183: B8 00 4C                              mov ax, 4C00h
+[  61]    0186: CD 21                                 int 21h
+[  62]        :                                       main endp
+[  63]        :                                       
+[  64]        :                                       ; ПОДПРОГРАММА: Преобразование строки в число
+[  65]        :                                       ; Вход: number_str - строка с цифрами
+[  66]        :                                       ; Выход: number - преобразованное число, is_valid - флаг валидности
+[  67]    0188:                                       string_to_number proc
+[  68]    0188: 50                                    push ax
+[  69]    0189: 53                                    push bx
+[  70]    018A: 51                                    push cx
+[  71]    018B: 52                                    push dx
+[  72]    018C: 56                                    push si
+[  73]        :                                       
+[  74]    018D: C6 06 4C 00 01                        mov is_valid, 1     ; Предполагаем, что число валидно
+[  75]    0192: C7 06 4A 00 00 00                     mov number, 0       ; Обнуляем число
+[  76]        :                                       
+[  77]    0198: 8A 0E 43 00                           mov cl, len         ; Длина строки
+[  78]    019C: B5 00                                 mov ch, 0
+[  79]    019E: 80 F9 00                              cmp cl, 0           ; Проверка пустой строки
+[  80]    01A1: 74 2C                                 je invalid_number
+[  81]        :                                       
+[  82]    01A3: BE 44 00                              mov si, offset number_str ; Указатель на строку
+[  83]        :                                       
+[  84]        :                                       ; Проверка каждого символа
+[  85]    01A6: BB 0A 00                              mov bx, 10          ; Множитель для десятичной системы
+[  86]        :                                       
+[  87]    01A9:                                       convert_loop:
+[  88]    01A9: 8A 04                                 mov al, [si]        ; Загружаем символ
+[  89]        :                                       
+[  90]        :                                       ; Проверяем, является ли символ цифрой
+[  91]    01AB: 3C 30                                 cmp al, '0'
+[  92]    01AD: 72 20                                 jb invalid_number
+[  93]    01AF: 3C 39                                 cmp al, '9'
+[  94]    01B1: 77 1C                                 ja invalid_number
+[  95]        :                                       
+[  96]        :                                       ; Преобразуем символ в цифру
+[  97]    01B3: 2C 30                                 sub al, '0'
+[  98]    01B5: B4 00                                 mov ah, 0
+[  99]        :                                       
+[ 100]        :                                       ; Умножаем текущее число на 10 и добавляем новую цифру
+[ 101]    01B7: 8B 16 4A 00                           mov dx, number
+[ 102]    01BB: 8B C8                                 mov cx, ax          ; Сохраняем новую цифру
+[ 103]        :                                       
+[ 104]    01BD: 8B C2                                 mov ax, dx          ; Текущее число в AX
+[ 105]    01BF: F7 E3                                 mul bx              ; Умножаем на 10
+[ 106]    01C1: 72 0C                                 jc invalid_number   ; Проверка переполнения
+[ 107]        :                                       
+[ 108]    01C3: 03 C1                                 add ax, cx          ; Добавляем новую цифру
+[ 109]    01C5: 72 08                                 jc invalid_number   ; Проверка переполнения
+[ 110]        :                                       
+[ 111]    01C7: A3 4A 00                              mov number, ax      ; Сохраняем результат
+[ 112]        :                                       
+[ 113]    01CA: 46                                    inc si              ; Следующий символ
+[ 114]    01CB: E2 DC                                 loop convert_loop
+[ 115]        :                                       
+[ 116]    01CD: EB 05                                 jmp conversion_done
+[ 117]        :                                       
+[ 118]    01CF:                                       invalid_number:
+[ 119]    01CF: C6 06 4C 00 00                        mov is_valid, 0     ; Устанавливаем флаг ошибки
+[ 120]        :                                       
+[ 121]    01D4:                                       conversion_done:
+[ 122]    01D4: 5E                                    pop si
+[ 123]    01D5: 5A                                    pop dx
+[ 124]    01D6: 59                                    pop cx
+[ 125]    01D7: 5B                                    pop bx
+[ 126]    01D8: 58                                    pop ax
+[ 127]    01D9: C3                                    ret
+[ 128]        :                                       string_to_number endp
+[ 129]        :                                       
+[ 130]        :                                       ; ПОДПРОГРАММА: Преобразование числа в двоичную систему и вывод
+[ 131]        :                                       ; Вход: AX - число для преобразования
+[ 132]    01DA:                                       print_binary proc
+[ 133]    01DA: 50                                    push ax
+[ 134]    01DB: 53                                    push bx
+[ 135]    01DC: 51                                    push cx
+[ 136]    01DD: 52                                    push dx
+[ 137]        :                                       
+[ 138]    01DE: 8B D8                                 mov bx, ax          ; Сохраняем число
+[ 139]    01E0: B9 10 00                              mov cx, 16          ; 16 битов для вывода
+[ 140]        :                                       
+[ 141]        :                                       ; Пропускаем ведущие нули
+[ 142]    01E3: B4 02                                 mov ah, 02h         ; Функция вывода символа
+[ 143]        :                                       
+[ 144]    01E5:                                       skip_leading_zeros:
+[ 145]    01E5: F7 C3 00 80                           test bx, 8000h      ; Проверяем старший бит
+[ 146]    01E9: 75 0A                                 jnz start_print     ; Если не ноль, начинаем вывод
+[ 147]    01EB: D1 E3                                 shl bx, 1           ; Сдвигаем влево
+[ 148]    01ED: E2 F6                                 loop skip_leading_zeros
+[ 149]        :                                       
+[ 150]        :                                       ; Если все биты нулевые, выводим "0"
+[ 151]    01EF: B2 30                                 mov dl, '0'
+[ 152]    01F1: CD 21                                 int 21h
+[ 153]    01F3: EB 10                                 jmp binary_done
+[ 154]        :                                       
+[ 155]    01F5:                                       start_print:
+[ 156]        :                                       ; Вывод битов
+[ 157]    01F5:                                       print_bits:
+[ 158]    01F5: B2 30                                 mov dl, '0'         ; Предполагаем '0'
+[ 159]    01F7: F7 C3 00 80                           test bx, 8000h      ; Проверяем старший бит
+[ 160]    01FB: 74 02                                 jz print_zero
+[ 161]    01FD: B2 31                                 mov dl, '1'         ; Если бит установлен
+[ 162]        :                                       
+[ 163]    01FF:                                       print_zero:
+[ 164]    01FF: CD 21                                 int 21h             ; Выводим бит
+[ 165]    0201: D1 E3                                 shl bx, 1           ; Сдвигаем влево для следующего бита
+[ 166]    0203: E2 F0                                 loop print_bits
+[ 167]        :                                       
+[ 168]    0205:                                       binary_done:
+[ 169]    0205: 5A                                    pop dx
+[ 170]    0206: 59                                    pop cx
+[ 171]    0207: 5B                                    pop bx
+[ 172]    0208: 58                                    pop ax
+[ 173]    0209: C3                                    ret
+[ 174]        :                                       print_binary endp
+[ 175]        :                                       
+[ 176]        :                                       end main
+[ 177]        :                                       
+ 
+===================================================================================================
+ 
+EXE HEADER - bytes from 0000 to 01FF inclusive.
+
+0000: 4D      -   exe signature (M)
+0001: 5A      -   exe signature (Z)
+0002: 0A      -   bytes on last page (l.byte)
+0003: 00      -   bytes on last page (h.byte)
+0004: 03      -   512 byte pages in file (l.byte)
+0005: 00      -   512 byte pages in file (h.byte)
+0006: 01      -   relocations (l.byte)
+0007: 00      -   relocations (h.byte)
+0008: 20      -   paragraphs in header (l.byte)
+0009: 00      -   paragraphs in header (h.byte)
+000A: 00      -   minimum memory (l.byte)
+000B: 00      -   minimum memory (h.byte)
+000C: FF      -   maximum memory (l.byte)
+000D: FF      -   maximum memory (h.byte)
+000E: 00      -   SS - stack segment (l.byte)
+000F: 00      -   SS - stack segment (h.byte)
+0010: 00      -   SP - stack pointer (l.byte)
+0011: 01      -   SP - stack pointer (h.byte)
+0012: B9      -   check sum (l.byte)
+0013: A6      -   check sum (h.byte)
+0014: 00      -   IP - instruction pointer (l.byte)
+0015: 00      -   IP - instruction pointer (h.byte)
+0016: 15      -   CS - code segment (l.byte)
+0017: 00      -   CS - code segment (h.byte)
+0018: 1E      -   relocation table adress (l.byte)
+0019: 00      -   relocation table adress (h.byte)
+001A: 00      -   overlay number (l.byte)
+001B: 00      -   overlay number (h.byte)
+001C: 01      -   signature (l.byte)
+001D: 00      -   signature (h.byte)
+001E: 01      -   relocation table - offset inside segment (l.byte)
+001F: 00      -   relocation table - offset inside segment (h.byte)
+0020: 15      -   relocation table - segment anchor (l.byte)
+0021: 00      -   relocation table - segment anchor (h.byte)
+0022 to 01FF  -   reserved relocation area  (00) 
+
+
+
+
+===================================================================================================

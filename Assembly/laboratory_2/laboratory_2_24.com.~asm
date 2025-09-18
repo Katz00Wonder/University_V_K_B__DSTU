@@ -1,0 +1,50 @@
+#make_COM#
+ORG 100h
+
+; Упрощенная версия с одним набором данных
+mov ax, 10    ; A = 10
+mov bx, 5     ; B = 5
+mov cx, 20    ; C = 20
+
+; X = 3(A - 2B) + 50 - C/2
+mov dx, bx
+shl dx, 1     ; 2B = 10
+sub ax, dx    ; A - 2B = 0
+mov dx, 3
+imul dx       ; 3 * 0 = 0
+add ax, 50    ; +50 = 50
+mov dx, cx
+shr dx, 1     ; C/2 = 10
+sub ax, dx    ; 50 - 10 = 40
+
+; Вывод результата (40)
+call print_ax
+
+ret
+
+; Функция вывода AX
+print_ax proc
+mov bx, 10
+mov cx, 0
+
+convert:
+xor dx, dx
+div bx
+push dx
+inc cx
+test ax, ax
+jnz convert
+
+print:
+pop dx
+add dl, '0'
+mov ah, 02h
+int 21h
+loop print
+
+ret
+print_ax endp
+
+
+
+; [SOURCE]: C:\Универ\University_V_K_B__DSTU\Assembly\laboratory_2\laboratory_2_24.asm

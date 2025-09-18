@@ -1,0 +1,248 @@
+EMU8086 GENERATED LISTING. MACHINE CODE <- SOURCE.
+ 
+laboratory_5_24.exe -- emu8086 assembler version: 4.08  
+ 
+[ 17.09.2025  --  14:39:11 ] 
+ 
+===================================================================================================
+[LINE]     LOC: MACHINE CODE                          SOURCE
+===================================================================================================
+ 
+[   1]        :                                       .model small
+[   2]        :                                       .stack 100h
+[   3]        :                                       
+[   4]        :                                       .data
+[   5]        :                                       ; Сообщения
+[   6]    0100: 45 6E 74 65 72 20 61 20 73 74 72 69   msg_input db 'Enter a string: $'
+                6E 67 3A 20 24                      
+[   7]    0111: 0D 0A 43 72 79 70 74 6F 67 72 61 6D   msg_output db 0Dh, 0Ah, 'Cryptogram: $'
+                3A 20 24                            
+[   8]    0120: 20 24                                 msg_space db ' $'
+[   9]    0122: 0D 0A 24                              msg_newline db 0Dh, 0Ah, '$'
+[  10]        :                                       
+[  11]        :                                       ; Буфер для ввода строки
+[  12]    0125: 64                                    buffer db 100        ; Максимальная длина
+[  13]    0126: 00                                    len db ?            ; Фактическая длина
+[  14]    0127: 24 24 24 24 24 24 24 24 24 24 24 24   string db 100 dup('$') ; Сама строка
+                24 24 24 24 24 24 24 24 24 24 24 24 
+                24 24 24 24 24 24 24 24 24 24 24 24 
+                24 24 24 24 24 24 24 24 24 24 24 24 
+                24 24 24 24 24 24 24 24 24 24 24 24 
+                24 24 24 24 24 24 24 24 24 24 24 24 
+                24 24 24 24 24 24 24 24 24 24 24 24 
+                24 24 24 24 24 24 24 24 24 24 24 24 
+                24 24 24 24                         
+[  15]        :                                       
+[  16]        :                                       .code
+[  17]    0190:                                       main proc
+[  18]    0190: B8 10 00                              mov ax, @data
+[  19]    0193: 8E D8                                 mov ds, ax
+[  20]    0195: 8E C0                                 mov es, ax          ; Для работы со строками
+[  21]        :                                       
+[  22]        :                                       ; Вывод приглашения к вводу
+[  23]    0197: B4 09                                 mov ah, 09h
+[  24]    0199: BA 00 00                              lea dx, msg_input
+[  25]    019C: CD 21                                 int 21h
+[  26]        :                                       
+[  27]        :                                       ; Ввод строки с клавиатуры
+[  28]    019E: B4 0A                                 mov ah, 0Ah
+[  29]    01A0: BA 25 00                              lea dx, buffer
+[  30]    01A3: CD 21                                 int 21h
+[  31]        :                                       
+[  32]        :                                       ; Вывод заголовка результата
+[  33]    01A5: B4 09                                 mov ah, 09h
+[  34]    01A7: BA 11 00                              lea dx, msg_output
+[  35]    01AA: CD 21                                 int 21h
+[  36]        :                                       
+[  37]        :                                       ; Обработка строки
+[  38]    01AC: 8A 0E 26 00                           mov cl, len         ; Длина строки
+[  39]    01B0: B5 00                                 mov ch, 0
+[  40]    01B2: BE 27 00                              mov si, offset string ; Указатель на строку
+[  41]        :                                       
+[  42]    01B5: 80 F9 00                              cmp cl, 0           ; Проверка пустой строки
+[  43]    01B8: 74 26                                 je exit_program
+[  44]        :                                       
+[  45]    01BA:                                       process_loop:
+[  46]    01BA: 8A 04                                 mov al, [si]        ; Загружаем символ
+[  47]        :                                       
+[  48]        :                                       ; Проверяем, является ли символ буквой
+[  49]    01BC: E8 26 00                              call is_letter
+[  50]    01BF: 72 0F                                 jc convert_letter   ; Если буква, преобразуем
+[  51]        :                                       
+[  52]        :                                       ; Если не буква, выводим как есть
+[  53]    01C1: 8A D0                                 mov dl, al
+[  54]    01C3: B4 02                                 mov ah, 02h
+[  55]    01C5: CD 21                                 int 21h
+[  56]        :                                       
+[  57]        :                                       ; Вывод пробела после символа
+[  58]    01C7: B4 09                                 mov ah, 09h
+[  59]    01C9: BA 20 00                              lea dx, msg_space
+[  60]    01CC: CD 21                                 int 21h
+[  61]        :                                       
+[  62]    01CE: EB 0D                                 jmp next_char
+[  63]        :                                       
+[  64]    01D0:                                       convert_letter:
+[  65]        :                                       ; Преобразуем букву в число
+[  66]    01D0: E8 26 00                              call letter_to_number
+[  67]        :                                       
+[  68]        :                                       ; Вывод числа
+[  69]    01D3: E8 32 00                              call print_number
+[  70]        :                                       
+[  71]        :                                       ; Вывод пробела после числа
+[  72]    01D6: B4 09                                 mov ah, 09h
+[  73]    01D8: BA 20 00                              lea dx, msg_space
+[  74]    01DB: CD 21                                 int 21h
+[  75]        :                                       
+[  76]    01DD:                                       next_char:
+[  77]    01DD: 46                                    inc si              ; Следующий символ
+[  78]    01DE: E2 DA                                 loop process_loop
+[  79]        :                                       
+[  80]    01E0:                                       exit_program:
+[  81]        :                                       ; Завершение программы
+[  82]    01E0: B8 00 4C                              mov ax, 4C00h
+[  83]    01E3: CD 21                                 int 21h
+[  84]        :                                       main endp
+[  85]        :                                       
+[  86]        :                                       ; Процедура проверки, является ли символ буквой
+[  87]        :                                       ; Вход: AL - символ
+[  88]        :                                       ; Выход: CF = 1 если буква, CF = 0 если не буква
+[  89]    01E5:                                       is_letter proc
+[  90]        :                                       ; Проверка на заглавные буквы (A-Z)
+[  91]    01E5: 3C 41                                 cmp al, 'A'
+[  92]    01E7: 72 0E                                 jb not_letter
+[  93]    01E9: 3C 5A                                 cmp al, 'Z'
+[  94]    01EB: 76 08                                 jbe is_letter_true
+[  95]        :                                       
+[  96]        :                                       ; Проверка на строчные буквы (a-z)
+[  97]    01ED: 3C 61                                 cmp al, 'a'
+[  98]    01EF: 72 06                                 jb not_letter
+[  99]    01F1: 3C 7A                                 cmp al, 'z'
+[ 100]    01F3: 77 02                                 ja not_letter
+[ 101]        :                                       
+[ 102]    01F5:                                       is_letter_true:
+[ 103]    01F5: F9                                    stc                 ; Устанавливаем флаг переноса
+[ 104]    01F6: C3                                    ret
+[ 105]        :                                       
+[ 106]    01F7:                                       not_letter:
+[ 107]    01F7: F8                                    clc                 ; Сбрасываем флаг переноса
+[ 108]    01F8: C3                                    ret
+[ 109]        :                                       is_letter endp
+[ 110]        :                                       
+[ 111]        :                                       ; Процедура преобразования буквы в число
+[ 112]        :                                       ; A=1, B=2, ..., Z=26
+[ 113]        :                                       ; Вход: AL - буква
+[ 114]        :                                       ; Выход: AL - число
+[ 115]    01F9:                                       letter_to_number proc
+[ 116]    01F9: 53                                    push bx
+[ 117]        :                                       
+[ 118]        :                                       ; Приводим к верхнему регистру, если нужно
+[ 119]    01FA: 3C 61                                 cmp al, 'a'
+[ 120]    01FC: 72 06                                 jb already_upper
+[ 121]    01FE: 3C 7A                                 cmp al, 'z'
+[ 122]    0200: 77 02                                 ja already_upper
+[ 123]    0202: 2C 20                                 sub al, 32          ; Преобразуем в верхний регистр
+[ 124]        :                                       
+[ 125]    0204:                                       already_upper:
+[ 126]        :                                       ; Преобразуем A=1, B=2, ..., Z=26
+[ 127]    0204: 2C 40                                 sub al, 'A' - 1     ; A становится 1, B становится 2, etc.
+[ 128]        :                                       
+[ 129]    0206: 5B                                    pop bx
+[ 130]    0207: C3                                    ret
+[ 131]        :                                       letter_to_number endp
+[ 132]        :                                       
+[ 133]        :                                       ; Процедура для вывода числа (0-255)
+[ 134]        :                                       ; Вход: AL - число
+[ 135]    0208:                                       print_number proc
+[ 136]    0208: 50                                    push ax
+[ 137]    0209: 53                                    push bx
+[ 138]    020A: 51                                    push cx
+[ 139]    020B: 52                                    push dx
+[ 140]        :                                       
+[ 141]    020C: B3 0A                                 mov bl, 10          ; Основание системы счисления
+[ 142]    020E: 33 C9                                 xor cx, cx          ; Счетчик цифр
+[ 143]        :                                       
+[ 144]        :                                       ; Для чисел больше 9 нужно выводить две цифры
+[ 145]    0210: 3C 09                                 cmp al, 9
+[ 146]    0212: 76 10                                 jbe single_digit
+[ 147]        :                                       
+[ 148]        :                                       ; Преобразование двухзначного числа
+[ 149]    0214: 32 E4                                 xor ah, ah
+[ 150]    0216:                                       convert_loop:
+[ 151]    0216: 32 E4                                 xor ah, ah
+[ 152]    0218: F6 F3                                 div bl              ; Делим AL на 10
+[ 153]    021A: 8A D4                                 mov dl, ah          ; Остаток в DL
+[ 154]    021C: 52                                    push dx             ; Сохраняем цифру
+[ 155]    021D: 41                                    inc cx              ; Увеличиваем счетчик цифр
+[ 156]    021E: 84 C0                                 test al, al
+[ 157]    0220: 75 F4                                 jnz convert_loop
+[ 158]        :                                       
+[ 159]    0222: EB 04                                 jmp print_digits
+[ 160]        :                                       
+[ 161]    0224:                                       single_digit:
+[ 162]        :                                       ; Однозначное число
+[ 163]    0224: 8A D0                                 mov dl, al
+[ 164]    0226: 52                                    push dx
+[ 165]    0227: 41                                    inc cx
+[ 166]        :                                       
+[ 167]    0228:                                       print_digits:
+[ 168]        :                                       ; Вывод цифр
+[ 169]    0228: 5A                                    pop dx              ; Извлекаем цифру
+[ 170]    0229: 80 C2 30                              add dl, '0'         ; Преобразуем в символ
+[ 171]    022C: B4 02                                 mov ah, 02h         ; Вывод символа
+[ 172]    022E: CD 21                                 int 21h
+[ 173]    0230: E2 F6                                 loop print_digits
+[ 174]        :                                       
+[ 175]    0232: 5A                                    pop dx
+[ 176]    0233: 59                                    pop cx
+[ 177]    0234: 5B                                    pop bx
+[ 178]    0235: 58                                    pop ax
+[ 179]    0236: C3                                    ret
+[ 180]        :                                       print_number endp
+[ 181]        :                                       
+[ 182]        :                                       end main
+[ 183]        :                                       
+ 
+===================================================================================================
+ 
+EXE HEADER - bytes from 0000 to 01FF inclusive.
+
+0000: 4D      -   exe signature (M)
+0001: 5A      -   exe signature (Z)
+0002: 37      -   bytes on last page (l.byte)
+0003: 00      -   bytes on last page (h.byte)
+0004: 03      -   512 byte pages in file (l.byte)
+0005: 00      -   512 byte pages in file (h.byte)
+0006: 01      -   relocations (l.byte)
+0007: 00      -   relocations (h.byte)
+0008: 20      -   paragraphs in header (l.byte)
+0009: 00      -   paragraphs in header (h.byte)
+000A: 00      -   minimum memory (l.byte)
+000B: 00      -   minimum memory (h.byte)
+000C: FF      -   maximum memory (l.byte)
+000D: FF      -   maximum memory (h.byte)
+000E: 00      -   SS - stack segment (l.byte)
+000F: 00      -   SS - stack segment (h.byte)
+0010: 00      -   SP - stack pointer (l.byte)
+0011: 01      -   SP - stack pointer (h.byte)
+0012: 91      -   check sum (l.byte)
+0013: D1      -   check sum (h.byte)
+0014: 00      -   IP - instruction pointer (l.byte)
+0015: 00      -   IP - instruction pointer (h.byte)
+0016: 19      -   CS - code segment (l.byte)
+0017: 00      -   CS - code segment (h.byte)
+0018: 1E      -   relocation table adress (l.byte)
+0019: 00      -   relocation table adress (h.byte)
+001A: 00      -   overlay number (l.byte)
+001B: 00      -   overlay number (h.byte)
+001C: 01      -   signature (l.byte)
+001D: 00      -   signature (h.byte)
+001E: 01      -   relocation table - offset inside segment (l.byte)
+001F: 00      -   relocation table - offset inside segment (h.byte)
+0020: 19      -   relocation table - segment anchor (l.byte)
+0021: 00      -   relocation table - segment anchor (h.byte)
+0022 to 01FF  -   reserved relocation area  (00) 
+
+
+
+
+===================================================================================================

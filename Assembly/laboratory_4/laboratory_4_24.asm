@@ -1,0 +1,155 @@
+.model small
+.stack 100h
+
+.data
+    ; Массив из 6 байт
+    byte_array db 0F0h, 07h, 3Fh, 01h, 0FFh, 00h
+    array_size equ 6
+    
+    ; Сообщения
+    msg_result db 'Bytes with <= 3 ones: $'
+    msg_count db 0Dh, 0Ah, 'Count: $'
+    msg_binary db 0Dh, 0Ah, 'Binary: $'
+    msg_space db ' $'
+    
+    count db 0           ; Счетчик байтов
+    temp db ?            ; Временная переменная
+
+.code
+main proc
+    mov ax, @data
+    mov ds, ax
+    
+    ; Инициализация
+    mov cx, array_size   ; Количество элементов
+    mov si, offset byte_array ; Указатель на массив
+    mov count, 0         ; Обнуляем счетчик
+    
+    ; Вывод заголовка
+    mov ah, 09h
+    lea dx, msg_result
+    int 21h
+    
+process_loop:
+    mov al, [si]         ; Загружаем текущий байт
+    mov temp, al         ; Сохраняем для вывода
+    
+    ; Подсчет количества единиц в байте
+    mov bl, 0            ; Счетчик единиц
+    mov dh, 8            ; Количество битов для проверки
+    
+count_ones:
+    test al, 1           ; Проверяем младший бит
+    jz bit_zero          ; Если 0, пропускаем
+    
+    inc bl               ; Увеличиваем счетчик единиц
+    
+bit_zero:
+    shr al, 1            ; Сдвигаем вправо для проверки следующего бита
+    dec dh               ; Уменьшаем счетчик битов
+    jnz count_ones       ; Продолжаем, пока не проверим все биты
+    
+    ; Проверяем, не превышает ли количество единиц 3
+    cmp bl, 3
+    ja skip_count        ; Если больше 3, пропускаем
+    
+    ; Увеличиваем общий счетчик
+    inc count
+    
+    ; Вывод текущего байта в двоичном виде
+    call print_binary_byte
+    mov ah, 09h
+    lea dx, msg_space
+    int 21h
+    
+skip_count:
+    inc si               ; Переходим к следующему байту
+    loop process_loop
+    
+    ; Вывод результата
+    mov ah, 09h
+    lea dx, msg_count
+    int 21h
+    
+    ; Вывод количества
+    mov al, count
+    call print_number
+    
+    ; Завершение программы
+    mov ax, 4C00h
+    int 21h
+main endp
+
+; Процедура для вывода байта в двоичном виде
+print_binary_byte proc
+    push ax
+    push bx
+    push cx
+    push dx
+    
+    mov al, temp
+    mov cl, 8            ; 8 битов для вывода
+    mov ch, 0
+    
+print_bits:
+    rol al, 1            ; Сдвигаем старший бит в CF
+    jc print_one
+    
+    ; Вывод '0'
+    mov dl, '0'
+    jmp print_bit
+    
+print_one:
+    ; Вывод '1'
+    mov dl, '1'
+    
+print_bit:
+    mov ah, 02h
+    int 21h
+    
+    dec cl
+    jnz print_bits
+    
+    pop dx
+    pop cx
+    pop bx
+    pop ax
+    ret
+print_binary_byte endp
+
+; Процедура для вывода числа (0-255)
+print_number proc
+    push ax
+    push bx
+    push cx
+    push dx
+    
+    mov bl, 10          ; Основание системы счисления
+    xor cx, cx          ; Счетчик цифр
+    
+    ; Преобразование числа в строку
+convert_loop:
+    xor ah, ah
+    div bl              ; Делим AL на 10
+    mov dl, ah          ; Остаток в DL
+    push dx             ; Сохраняем цифру
+    inc cx              ; Увеличиваем счетчик цифр
+    test al, al
+    jnz convert_loop
+    
+    ; Вывод цифр
+print_digits:
+    pop dx              ; Извлекаем цифру
+    add dl, '0'         ; Преобразуем в символ
+    mov ah, 02h         ; Вывод символа
+    int 21h
+    loop print_digits
+    
+    pop dx
+    pop cx
+    pop bx
+    pop ax
+    ret
+print_number endp
+
+end main
