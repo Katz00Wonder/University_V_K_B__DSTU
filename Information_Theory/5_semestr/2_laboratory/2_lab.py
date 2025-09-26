@@ -128,19 +128,19 @@ class TextEntropyAnalyzer:
             try:
                 self.file_info_label.config(text=f"Файл: {os.path.basename(file_path)}")
                 
-                # Чтение файла в бинарном режиме для расчета энтропии файла
+                
                 with open(file_path, 'rb') as file:
                     self.file_data = file.read()
                 
-                # Расчет энтропии файла
+                
                 file_entropy = self.calculate_file_entropy()
                 self.file_entropy_label.config(text=f"Энтропия файла: {file_entropy:.4f} бит/байт")
                 
-                # Информация о размере файла
+                
                 file_size = len(self.file_data)
                 self.file_size_label.config(text=f"Размер файла: {file_size} байт")
                 
-                # Попытка извлечь текст
+                
                 file_extension = os.path.splitext(file_path)[1].lower()
                 text_entropy = None
                 
@@ -149,7 +149,7 @@ class TextEntropyAnalyzer:
                 elif file_extension in ['.docx', '.doc']:
                     self.text_content = self.read_word(file_path)
                 else:
-                    # Пробуем разные кодировки для текстовых файлов
+                   
                     encodings = ['utf-8', 'cp1251', 'latin-1', 'ascii']
                     for encoding in encodings:
                         try:
@@ -159,19 +159,19 @@ class TextEntropyAnalyzer:
                         except UnicodeDecodeError:
                             continue
                     else:
-                        # Если не удалось декодировать как текст, пробуем бинарное чтение
+                        
                         try:
                             self.text_content = self.file_data.decode('utf-8', errors='ignore')
                         except:
                             self.text_content = ""
                 
-                # Анализ текста, если он есть
+                
                 if self.text_content and len(self.text_content.strip()) > 0:
                     self.analyze_text()
                     text_entropy = self.calculate_text_entropy()
                     self.text_entropy_label.config(text=f"Энтропия текста: {text_entropy:.4f} бит/символ")
                     
-                    # Сравнение энтропий
+                    
                     if text_entropy is not None:
                         diff = abs(file_entropy - text_entropy)
                         comparison_text = f"Разница энтропий: {diff:.4f} бит"
@@ -255,45 +255,45 @@ class TextEntropyAnalyzer:
         if not text:
             return ""
             
-        # Удаляем указанные символы
+        
         chars_to_remove = r'[@#$^&*{}[\]<>/\\|=+`]'
         cleaned_text = re.sub(chars_to_remove, '', text)
         return cleaned_text
     
     def analyze_text(self):
-        # Очищаем текст
+        
         cleaned_text = self.clean_text(self.text_content)
         
         if not cleaned_text:
             messagebox.showwarning("Предупреждение", "Текст после очистки пуст")
             return
         
-        # Подсчитываем частоты символов
+        
         total_chars = len(cleaned_text)
         char_counter = Counter(cleaned_text)
         
         self.char_frequencies = dict(char_counter)
         self.probabilities = {char: count/total_chars for char, count in char_counter.items()}
         
-        # Обновляем информацию
+        
         self.total_chars_label.config(text=f"Всего символов текста: {total_chars}")
         self.unique_chars_label.config(text=f"Уникальных символов: {len(self.char_frequencies)}")
         
-        # Обновляем таблицу
+        
         self.update_table()
     
     def update_table(self):
-        # Очищаем таблицу
+        
         for item in self.tree.get_children():
             self.tree.delete(item)
         
-        # Сортируем символы по частоте
+        
         sorted_chars = sorted(self.probabilities.items(), key=lambda x: x[1], reverse=True)
         
-        # Заполняем таблицу
+        
         for char, prob in sorted_chars:
             count = self.char_frequencies[char]
-            # Экранируем специальные символы для отображения
+            
             display_char = self.escape_char(char)
             self.tree.insert('', 'end', values=(
                 display_char, 
@@ -303,7 +303,7 @@ class TextEntropyAnalyzer:
             ))
     
     def escape_char(self, char):
-        # Экранирование специальных символов для отображения
+        
         if char == ' ':
             return "' ' (пробел)"
         elif char == '\t':
@@ -321,48 +321,74 @@ class TextEntropyAnalyzer:
             messagebox.showwarning("Предупреждение", "Сначала загрузите файл")
             return
         
-        # Подсчет частот байтов
+        
         byte_counts = Counter(self.file_data)
-        bytes_list = list(range(256))  # Все возможные байты от 0 до 255
+        bytes_list = list(range(256))  
         frequencies = [byte_counts.get(byte, 0) for byte in bytes_list]
         
-        # Нормализация частот
+        
         total_bytes = len(self.file_data)
         if total_bytes > 0:
             frequencies = [freq / total_bytes for freq in frequencies]
         
-        # Создание гистограммы
-        fig, ax = plt.subplots(figsize=(14, 7))
         
-        # Группируем байты по категориям для лучшей понятности
-        categories = {
-            'ASCII текст\n(32-126)': range(32, 127),
-            'Управляющие\nсимволы (0-31,127)': list(range(0, 32)) + [127],
-            'Расширенная\nASCII (128-255)': range(128, 256)
-        }
+        fig, ax = plt.subplots(figsize=(16, 8))
         
-        category_names = []
-        category_freqs = []
         
-        for name, byte_range in categories.items():
-            total_freq = sum(frequencies[byte] for byte in byte_range)  # Исправлено: frequencies вместо frequcies
-            category_names.append(name)
-            category_freqs.append(total_freq)
+        bars = ax.bar(bytes_list, frequencies, alpha=0.7, color='skyblue', edgecolor='black', linewidth=0.3)
+        ax.set_xlabel('Байт (десятичное значение)')
+        ax.set_ylabel('Частота появления')
+        ax.set_title('Распределение байтов в файле (0-255)')
+        ax.set_xlim(-5, 260)
         
-        # Создаем гистограмму по категориям
-        bars = ax.bar(category_names, category_freqs, alpha=0.8, color=['lightblue', 'lightcoral', 'lightgreen'])
-        ax.set_xlabel('Категории байтов')
-        ax.set_ylabel('Суммарная частота появления')
-        ax.set_title('Распределение байтов в файле по категориям')
+       
+        ax.set_xticks(range(0, 256, 16)) 
+        ax.grid(True, alpha=0.3, axis='y')
         
-        # Добавляем значения на столбцы
-        for bar, freq in zip(bars, category_freqs):
-            ax.text(bar.get_x() + bar.get_width()/2, bar.get_height(),
-                   f'{freq:.3f}', ha='center', va='bottom', fontsize=10, fontweight='bold')
         
-        ax.grid(True, alpha=0.3)
+        if total_bytes > 0:
+            
+            top_bytes = sorted([(byte, freq) for byte, freq in enumerate(frequencies)], 
+                             key=lambda x: x[1], reverse=True)[:5]
+            
+            info_text = "Самые частые байты:\n"
+            for i, (byte, freq) in enumerate(top_bytes):
+                if freq > 0:
+                    char_desc = self.get_byte_description(byte)
+                    info_text += f"{byte} (0x{byte:02X}) - {freq:.4f} {char_desc}\n"
+            
+            
+            ax.text(0.02, 0.98, info_text, transform=ax.transAxes, fontsize=10,
+                   verticalalignment='top', bbox=dict(boxstyle='round', facecolor='wheat', alpha=0.8))
+        
+        
+        significant_bytes = [0, 9, 10, 13, 32, 127, 255]
+        for byte in significant_bytes:
+            if frequencies[byte] > 0.001:  
+                ax.text(byte, frequencies[byte] + 0.002, str(byte), 
+                       ha='center', va='bottom', fontsize=8, fontweight='bold')
+        
         plt.tight_layout()
         self.display_figure(fig)
+    
+    def get_byte_description(self, byte):
+        """Получить текстовое описание байта"""
+        if byte == 0:
+            return "(NUL)"
+        elif byte == 9:
+            return "(TAB)"
+        elif byte == 10:
+            return "(LF)"
+        elif byte == 13:
+            return "(CR)"
+        elif byte == 32:
+            return "(SPACE)"
+        elif byte == 127:
+            return "(DEL)"
+        elif 32 <= byte <= 126:
+            return f"('{chr(byte)}')"
+        else:
+            return ""
     
     def show_full_histogram(self):
         if not self.probabilities:
