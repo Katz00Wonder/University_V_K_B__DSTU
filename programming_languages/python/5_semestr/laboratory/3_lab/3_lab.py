@@ -65,7 +65,7 @@ while True:
             current_datetime = datetime.now()
             print(f"Текущее дата и время {current_datetime}, Текущее дата {current_datetime.date()}, Текущее время {current_datetime.time()}")
         case "9":
-            birthday = date(2004, 9, 29)
+            birthday = date(2025, 9, 25)
 
 
             today = date.today()
