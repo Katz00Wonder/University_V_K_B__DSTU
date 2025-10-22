@@ -52,11 +52,14 @@ class Bike(Transport):
 
 print("=== СОЗДАНИЕ ОБЪЕКТОВ ===")
 transport1 = Transport("Generic Transport", 80)
+transport2 = Transport("Трактор Беларусь", 220)
 car1 = Car("Toyota Camry", 120, 5)
 car2 = Car("Honda Civic", 140, 4)
 car3 = Car("BMW X5", 120, 5)
 bike1 = Bike("Giant", 25, "mountain")
 bike2 = Bike("Specialized", 30, "road")
+
+
 
 transport1.move()
 car1.move()
@@ -82,7 +85,7 @@ print("\n=== СЛОЖЕНИЕ СКОРОСТЕЙ МАШИН (car1 + car2) ===")
 total_speed = car1 + car2
 print(f"Суммарная скорость {car1.brand} и {car2.brand}: {total_speed} km/h")
 
-total_speed_three = car1 + car2 + car3
+total_speed_three = car1 + car2
 print(f"Суммарная скорость трех машин: {total_speed_three} km/h")
 
 print("\n=== СЛОЖЕНИЕ МАШИНЫ И ВЕЛОСИПЕДА ===")
@@ -93,6 +96,7 @@ except Exception as e:
     print(f"Ошибка при сложении: {type(e).__name__}: {e}")
 
 print(f"Транспорт: {transport1}\n Машина 1: {car1}\n Машина 2: {car2}\n Машина 3: {car3}\n Велосипед 1: {bike1}\n Велосипед 2: {bike2}\n")
+print(f"Транспорт: {transport2}\n Машина 1: {car1}\n Машина 2: {car2}\n Машина 3: {car3}\n Велосипед 1: {bike1}\n Велосипед 2: {bike2}\n")
 
 list_objects = [Transport("Generic Transport", 80), Car("Toyota Camry", 120, 5), Bike("Giant", 25, "mountain")]
 
